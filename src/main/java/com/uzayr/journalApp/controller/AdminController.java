@@ -1,5 +1,6 @@
 package com.uzayr.journalApp.controller;
 
+import com.uzayr.journalApp.cache.AppCache;
 import com.uzayr.journalApp.entity.User;
 import com.uzayr.journalApp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,9 @@ public class AdminController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AppCache appCache;
+
     // fetch details of all users as an admin
     @GetMapping("/all-users")
     public ResponseEntity<?> getAllUsers() {
@@ -30,5 +34,10 @@ public class AdminController {
     @PostMapping("/create-admin-user")
     public void createUser(@RequestBody User user) {
         userService.saveAdmin(user);
+    }
+
+    @GetMapping("clear-app-cache")
+    public void clearAppCache() {
+        appCache.init();
     }
 }
