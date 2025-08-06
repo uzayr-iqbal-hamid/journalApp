@@ -5,9 +5,11 @@ import com.uzayr.journalApp.cache.AppCache;
 import com.uzayr.journalApp.entity.JournalEntry;
 import com.uzayr.journalApp.entity.User;
 import com.uzayr.journalApp.enums.Sentiment;
+import com.uzayr.journalApp.model.SentimentData;
 import com.uzayr.journalApp.repository.UserRepositoryImpl;
 import com.uzayr.journalApp.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -30,10 +32,12 @@ public class UserScheduler {
     @Autowired
     private AppCache appCache;
 
+    @Autowired
+    private KafkaTemplate<String, SentimentData> kafkaTemplate;
+
     // scheduled a cron task to send mail to users who have opted for sentimentAnalysis and have a valid mail,
     // every week 9 AM on a sunday
-//    @Scheduled(cron = "0 0 9 * * SUN")
-
+    @Scheduled(cron = "0 0 9 * * SUN")
     public void fetchUserAndSendSaMail() {
         List<User> users = userRepository.getUserForSA();
 
@@ -65,11 +69,12 @@ public class UserScheduler {
 
             // if the most frequent sentiment not equal to null, then send a mail
             if (mostFrequentSentiment != null) {
-                emailService.sendEmail(
-                        user.getEmail(),
-                        "Sentiment for last 7 days",
-                        mostFrequentSentiment.toString()
-                );
+                SentimentData sentimentData = SentimentData.builder().email(user.getEmail()).sentiment("Sentiment for last 7 days " + mostFrequentSentiment).build();
+                try{
+                    kafkaTemplate.send("weekly-sentiments", sentimentData.getEmail(), sentimentData);
+                }catch (Exception e){
+                    emailService.sendEmail(sentimentData.getEmail(), "Sentiment for previous week", sentimentData.getSentiment());
+                }
             }
         }
     }
