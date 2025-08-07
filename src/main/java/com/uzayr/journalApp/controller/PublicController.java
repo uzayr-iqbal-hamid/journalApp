@@ -1,6 +1,7 @@
 package com.uzayr.journalApp.controller;
 
 import com.uzayr.journalApp.dto.UserDTO;
+import com.uzayr.journalApp.entity.User;
 import com.uzayr.journalApp.service.UserDetailsServiceImpl;
 import com.uzayr.journalApp.service.UserService;
 import com.uzayr.journalApp.utils.JwtUtil;
@@ -40,12 +41,12 @@ public class PublicController {
     // Sign up
     @PostMapping("/signup")
     public void signup(@RequestBody UserDTO user) {
-        com.uzayr.journalApp.entity.User newUser = new User();
+        User newUser = new User();
         newUser.setEmail(user.getEmail());
         newUser.setUserName(user.getUserName());
         newUser.setPassword(user.getPassword());
         newUser.setSentimentAnalysis(user.isSentimentAnalysis());
-        userService.saveNewUser(user);
+        userService.saveNewUser(newUser);
     }
 
     // Log in
